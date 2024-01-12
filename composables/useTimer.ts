@@ -1,15 +1,14 @@
 export function useTimer() {
   const timer = useState("timer", () => ({
-    workingTime: 0,
-    restTime: 0,
-    maxLoop: 0,
+    workingTime: 1,
+    restTime: 1,
+    maxLoop: 1,
     currentLoop: 1,
     remainingTime: 0,
+    interval: '' as NodeJS.Timeout | '',
     nowWorking: true,
   }));
 
-  // TODO: 次一時停止、クリアボタンを設置して操作できるようにしたい。
-  // TODO: その次は数字を受け取って開始できるように。
   async function startPomodoro() {
     if (
       timer.value.workingTime === 0 ||
@@ -22,13 +21,13 @@ export function useTimer() {
     for (timer.value.currentLoop; timer.value.currentLoop <= timer.value.maxLoop; timer.value.currentLoop++) {
       if (timer.value.nowWorking) {
         if(timer.value.remainingTime === 0){
-          timer.value.remainingTime = timer.value.workingTime;
+          timer.value.remainingTime = timer.value.workingTime * 60;
         }
         await new Promise<void>(resolve => {
-          const workInterval = setInterval(() => {
+          timer.value.interval = setInterval(() => {
             timer.value.remainingTime--;
             if (timer.value.remainingTime <= 0) {
-              clearInterval(workInterval);
+              clearInterval(timer.value.interval);
               timer.value.nowWorking = false;
               resolve();
             }
@@ -37,13 +36,13 @@ export function useTimer() {
       }
       if (!timer.value.nowWorking) {
         if(timer.value.remainingTime === 0){
-          timer.value.remainingTime = timer.value.restTime;
+          timer.value.remainingTime = timer.value.restTime * 60;
         }
         await new Promise<void>(resolve => {
-          const restInterval = setInterval(() => {
+          timer.value.interval = setInterval(() => {
             timer.value.remainingTime--;
             if (timer.value.remainingTime <= 0) {
-              clearInterval(restInterval);
+              clearInterval(timer.value.interval);
               timer.value.nowWorking = true;
               resolve();
             }
@@ -53,8 +52,13 @@ export function useTimer() {
     }
   }
 
+  function clearPomodoro() {
+    clearInterval(timer.value.interval);
+  }
+
   return {
     timer,
     startPomodoro,
+    clearPomodoro
   };
 }
